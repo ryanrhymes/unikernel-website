@@ -3,6 +3,11 @@ open V1_LWT
 
 module Main (C:CONSOLE) (FS:KV_RO) (S:Cohttp_lwt.Server) = struct
 
+  let patch_uri path = match path with
+    | "LiteLab" -> "LiteLab/index.html"
+    | "kvasir" -> "kvasir/index.html"
+    | _ -> path
+
   let start c fs http =
 
     let read_fs name =
@@ -29,7 +34,8 @@ module Main (C:CONSOLE) (FS:KV_RO) (S:Cohttp_lwt.Server) = struct
     let rec dispatcher = function
       | [] | [""] -> dispatcher ["index.html"]
       | segments ->
-        let path = String.concat "/" segments in
+        let path = String.concat "/" segments |> patch_uri in
+	print_endline path;
         Lwt.catch (fun () ->
             read_fs path >>= fun body ->
             let mime_type = Magic_mime.lookup path in
@@ -48,6 +54,6 @@ module Main (C:CONSOLE) (FS:KV_RO) (S:Cohttp_lwt.Server) = struct
       let cid = Cohttp.Connection.to_string conn_id in
       C.log c (Printf.sprintf "conn %s closed" cid)
     in
-    http (`TCP 8080) (S.make ~conn_closed ~callback ())
+    http (`TCP 80) (S.make ~conn_closed ~callback ())
 
 end
